@@ -1,0 +1,115 @@
+{
+  "project": "R&D Tax App",
+  "branchName": "ralph/phase-1-critical-auth",
+  "description": "Phase 1: Critical Authentication & Secrets - Fix unauthenticated API routes, add rate limiting, structured logging, and sanitize env secrets",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Sanitize .env.example and verify gitignore",
+      "description": "As a developer, I need .env.example to contain only safe placeholder values so secrets are never committed.",
+      "acceptanceCriteria": [
+        "Update .env.example: replace any real passwords in DATABASE_URL with 'your_password_here'",
+        "Ensure NEXTAUTH_SECRET has placeholder like '<generate-with-openssl-rand-base64-32>'",
+        "Ensure ENCRYPTION_KEY has placeholder like '<generate-base64-encoded-32-byte-key>'",
+        "Ensure GOOGLE_AI_API_KEY has placeholder like '<from-aistudio-google-com>'",
+        "Verify .gitignore contains .env* entry",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Verified: DATABASE_URL has 'your_password_here', NEXTAUTH_SECRET/ENCRYPTION_KEY have placeholder text, GOOGLE_AI_API_KEY is commented out, .gitignore has '.env*' entry."
+    },
+    {
+      "id": "US-002",
+      "title": "Enhance proxy.ts with API route auth protection",
+      "description": "As a developer, I need the proxy layer to enforce authentication on all /api/* routes so no API route is accessible without a valid session.",
+      "acceptanceCriteria": [
+        "In src/proxy.ts, after the public paths check, add token verification using getToken from next-auth/jwt",
+        "If no token and path starts with /api/, return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })",
+        "If no token and non-API path, redirect to /auth/login with callbackUrl",
+        "If token exists but token.organisationId is missing and path starts with /api/, return NextResponse.json({ error: 'No organisation assigned' }, { status: 403 })",
+        "If token exists but organisationId missing and path is /clients or /projects, redirect to /auth/no-organisation",
+        "Public paths whitelist includes: /auth/login, /auth/register, /auth/error, /api/auth, /api/health",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Verified: proxy.ts uses getToken, returns 401 for unauthenticated API calls, redirects non-API to /auth/login, returns 403 for missing org on API, redirects /clients|/projects to /auth/no-organisation, whitelist correct."
+    },
+    {
+      "id": "US-003",
+      "title": "Add auth, rate limiting, and logger to applications/[id] route",
+      "description": "As a developer, I need src/app/api/applications/[id]/route.ts to require authentication, enforce rate limits, and use structured logging.",
+      "acceptanceCriteria": [
+        "Import getServerSession, authOptions, checkRateLimit, rateLimitConfigs, and logger",
+        "Each handler (GET, PUT, DELETE) starts with rate limit check: const rateLimitResponse = await checkRateLimit(request, rateLimitConfigs.api); if (rateLimitResponse) return rateLimitResponse",
+        "Each handler checks session: const session = await getServerSession(authOptions); if (!session?.user?.organisationId) return 401",
+        "All console.error calls replaced with logger.error",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Verified: All imports present. GET/PUT/DELETE have rate limit + session + org check. logger.error used throughout. Also has org verification via getApplicationOrgId."
+    },
+    {
+      "id": "US-004",
+      "title": "Add auth, rate limiting, and logger to activities/[id] route",
+      "description": "As a developer, I need src/app/api/activities/[id]/route.ts to require authentication, enforce rate limits, and use structured logging.",
+      "acceptanceCriteria": [
+        "Import getServerSession, authOptions, checkRateLimit, rateLimitConfigs, and logger",
+        "Each handler (GET, PUT, DELETE) starts with rate limit check",
+        "Each handler checks session: if (!session?.user?.organisationId) return 401",
+        "All console.error calls replaced with logger.error",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Verified: All imports present. GET/PUT/DELETE have rate limit + session + org check. logger.error used throughout. Also has org verification via getActivityOrgId."
+    },
+    {
+      "id": "US-005",
+      "title": "Add auth, rate limiting, and logger to time-allocations/[id] route",
+      "description": "As a developer, I need src/app/api/time-allocations/[id]/route.ts to require authentication, enforce rate limits, and use structured logging.",
+      "acceptanceCriteria": [
+        "Import getServerSession, authOptions, checkRateLimit, rateLimitConfigs, and logger",
+        "Each handler (GET, PUT, DELETE) starts with rate limit check",
+        "Each handler checks session: if (!session?.user?.organisationId) return 401",
+        "All console.error calls replaced with logger.error",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Verified: All imports present. GET/PUT/DELETE have rate limit + session + org check. logger.error used throughout. Also has org verification via getTimeAllocationOrgId and Zod validation on PUT."
+    },
+    {
+      "id": "US-006",
+      "title": "Add auth, rate limiting, and logger to projects/[id]/activities route",
+      "description": "As a developer, I need src/app/api/projects/[id]/activities/route.ts to require authentication, enforce rate limits, and use structured logging.",
+      "acceptanceCriteria": [
+        "Import getServerSession, authOptions, checkRateLimit, rateLimitConfigs, and logger",
+        "Each handler (GET, POST) starts with rate limit check",
+        "Each handler checks session: if (!session?.user?.organisationId) return 401",
+        "All console.error calls replaced with logger.error",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Verified: All imports present. GET/POST have rate limit + session + org check. logger.error used throughout. Also has org verification via getProjectOrgId."
+    },
+    {
+      "id": "US-007",
+      "title": "Add rate limiting to applications list route",
+      "description": "As a developer, I need src/app/api/applications/route.ts to have rate limiting on GET and POST handlers.",
+      "acceptanceCriteria": [
+        "Import checkRateLimit and rateLimitConfigs",
+        "GET handler starts with rate limit check: const rateLimitResponse = await checkRateLimit(request, rateLimitConfigs.api); if (rateLimitResponse) return rateLimitResponse",
+        "POST handler starts with rate limit check",
+        "Existing auth checks remain intact",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "Verified: checkRateLimit and rateLimitConfigs imported. Both GET and POST start with rate limit check. Auth checks intact with organisationId requirement. Also has org verification via getClientOrgId."
+    }
+  ]
+}

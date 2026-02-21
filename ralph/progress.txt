@@ -1,0 +1,44 @@
+# Ralph Progress Log
+# Feature: Phase 3 - Security Hardening
+# Branch: ralph/phase-3-hardening
+# Started: 2026-02-22
+# Stories: 6
+
+---
+
+[2026-02-22 Session 1]
+
+## US-001: Fix encryption key derivation - COMPLETE
+- Removed scrypt with hardcoded 'salt' from src/lib/encryption.ts
+- getEncryptionKey now decodes base64 directly, validates 32-byte length
+- Per-record random salt preserved (crypto.randomBytes(32))
+
+## US-002: Reduce session duration - COMPLETE
+- src/lib/auth.ts maxAge changed to 24 * 60 * 60 (24 hours)
+
+## US-003: Tighten CSP and add security headers - COMPLETE
+- CSP script-src: removed unsafe-eval, kept unsafe-inline
+- HSTS: added preload
+- Added Cross-Origin-Opener-Policy: same-origin
+- Added Cross-Origin-Resource-Policy: same-origin
+
+## US-004: Zod validation on projects and staff PUT - COMPLETE
+- projects/[id]: projectFormSchema.partial().safeParse
+- staff/[id]: staffBaseSchema.partial().safeParse
+
+## US-005: Zod validation on expenditures and time-allocations PUT - COMPLETE
+- expenditures/[id]: expenditureBaseSchema.partial().safeParse
+- time-allocations/[id]: timeAllocationBaseSchema.partial().safeParse
+
+## US-006: Password strength validation - COMPLETE
+- PASSWORD_MIN_LENGTH=10, PASSWORD_REGEX for upper+lower+digit
+- validatePassword returns {valid, error}
+- hashPassword calls validatePassword, throws on failure
+
+---
+
+## Summary
+All 6 stories verified and passing. 0 TS errors in Phase 3 files.
+Progress: 6/6 complete (100%)
+
+---

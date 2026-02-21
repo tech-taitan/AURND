@@ -1,0 +1,212 @@
+{
+  "project": "R&D Tax App",
+  "branchName": "ralph/application-drafter-and-gaps",
+  "description": "Complete core feature gaps: AI Application Drafter, Full Document Pack Generation, ABN Lookup, and PDF Export",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add Application Draft types",
+      "description": "As a developer, I need TypeScript types for the AI-drafted application output.",
+      "acceptanceCriteria": [
+        "Add ApplicationDraft interface with sections: executiveSummary, projectNarratives[], activityDescriptions[], expenditureSummary, technicalUncertaintyStatement",
+        "Add ProjectNarrative interface with projectId, projectName, overview, technicalObjectives, methodology, outcomes",
+        "Add ActivityDescription interface with activityId, activityName, activityType, hypothesis, experiment, observation, evaluation, conclusion, uncertaintyStatement",
+        "Add ExpenditureSummary interface with totalAmount, byCategory object, narrative string",
+        "Export all types from src/types/ai-review.ts",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Create application drafter prompt template",
+      "description": "As a developer, I need a prompt template for AI-based application drafting.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/prompts/application-drafter.ts",
+        "Export buildApplicationDrafterPrompt function that accepts client, projects, activities, expenditures",
+        "Prompt instructs AI to generate ATO-compliant R&D application narrative",
+        "Include sections for executive summary, project descriptions, activity H-E-C, expenditure justification",
+        "Specify output format as JSON matching ApplicationDraft interface",
+        "Export getApplicationDrafterSystemInstruction with R&D Tax consultant persona",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Create application drafter service",
+      "description": "As a developer, I need a service that generates a complete draft R&D application.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/application-drafter.service.ts",
+        "Export ApplicationDrafterService class with draft method",
+        "Method accepts applicationId and organisationId, returns ApplicationDraft",
+        "Fetch all related data: client, projects, activities, expenditures, staff allocations",
+        "Call Gemini AI with application drafter prompt",
+        "Use jsonMode: true for structured response",
+        "Parse and validate response matches ApplicationDraft interface",
+        "Include retry logic with exponential backoff",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Create API endpoint for application drafting",
+      "description": "As a developer, I need an API endpoint to trigger application drafting.",
+      "acceptanceCriteria": [
+        "Create src/app/api/applications/[id]/draft/route.ts",
+        "POST endpoint that calls ApplicationDrafterService.draft",
+        "Require authentication and verify organisation ownership",
+        "Check GOOGLE_AI_API_KEY is configured, return 503 if not",
+        "Return ApplicationDraft as JSON on success",
+        "Handle timeout (60 seconds) and return 504 on timeout",
+        "Log start and completion with processing time",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Create Draft Application button component",
+      "description": "As a user, I want a button to draft my full R&D application.",
+      "acceptanceCriteria": [
+        "Create src/components/ai/draft-application-button.tsx as client component",
+        "Accept applicationId prop",
+        "Button styled prominently with AI sparkle icon and text 'Draft Application'",
+        "Show loading state with 'Drafting...' text during API call",
+        "On success, open DraftApplicationPanel with result",
+        "On error, show error toast with message",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Create Draft Application panel component",
+      "description": "As a user, I want to review and edit my AI-drafted application.",
+      "acceptanceCriteria": [
+        "Create src/components/ai/draft-application-panel.tsx as client component",
+        "Accept applicationDraft prop of type ApplicationDraft",
+        "Display each section in expandable cards with edit capability",
+        "Show executive summary, project narratives, activity descriptions, expenditure summary",
+        "Include 'Accept All' and 'Accept Section' buttons",
+        "Include 'Regenerate Section' button for each section",
+        "Include 'Export to DOCX' button that calls document generation",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Add Draft Application button to application page",
+      "description": "As a user, I want to access the Draft Application feature from the application page.",
+      "acceptanceCriteria": [
+        "Import DraftApplicationButton in src/app/(dashboard)/clients/[clientId]/applications/[applicationId]/page.tsx",
+        "Add button in page header next to existing action buttons",
+        "Button visible only when application has at least one project with activities",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Create full document pack generator",
+      "description": "As a developer, I need to generate a complete document pack for submission.",
+      "acceptanceCriteria": [
+        "Extend src/services/document.service.ts with generateFullPack method",
+        "Accept applicationId and optional ApplicationDraft (if AI-drafted)",
+        "Generate DOCX files: cover-page.docx, activity-descriptions.docx, expenditure-summary.docx, staff-allocations.docx",
+        "Combine all into zip file or return array of file buffers",
+        "Use existing docx library patterns from generateActivityDescription",
+        "Store generated documents in GeneratedDocument table",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Add PDF export capability",
+      "description": "As a developer, I need to export documents as PDF.",
+      "acceptanceCriteria": [
+        "Create src/services/pdf.service.ts",
+        "Use existing pdf-lib dependency",
+        "Export generatePdfFromText method for simple text-to-PDF",
+        "Export generatePdfFromDocx method that converts DOCX buffer to PDF",
+        "Include proper page formatting, headers, footers",
+        "Add company branding placeholder",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Create ABN lookup service",
+      "description": "As a developer, I need to lookup company details from ABN.",
+      "acceptanceCriteria": [
+        "Create src/services/abn-lookup.service.ts",
+        "Export lookupAbn function that accepts ABN string",
+        "Call Australian Business Register API (abr.business.gov.au)",
+        "Return AbnLookupResult with companyName, entityType, status, gstRegistered, address",
+        "Handle invalid ABN format with validation error",
+        "Handle API errors gracefully with fallback message",
+        "Cache results for 24 hours using LRU cache",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Create ABN lookup API endpoint",
+      "description": "As a developer, I need an API endpoint for ABN lookup.",
+      "acceptanceCriteria": [
+        "Create src/app/api/abn/lookup/route.ts",
+        "GET endpoint with abn query parameter",
+        "Call AbnLookupService.lookupAbn",
+        "Return AbnLookupResult as JSON",
+        "Rate limit to 10 requests per minute per user",
+        "Require authentication",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Add ABN lookup to client form",
+      "description": "As a user, I want to auto-populate client details from ABN.",
+      "acceptanceCriteria": [
+        "Update src/components/clients/client-form.tsx",
+        "Add 'Lookup' button next to ABN input field",
+        "On click, call /api/abn/lookup with entered ABN",
+        "Auto-fill companyName and address fields from response",
+        "Show loading state during lookup",
+        "Show error message if lookup fails",
+        "Typecheck passes"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

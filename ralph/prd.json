@@ -1,0 +1,92 @@
+{
+  "project": "R&D Tax App",
+  "branchName": "ralph/phase-3-hardening",
+  "description": "Phase 3: Security Hardening - Fix encryption, reduce session duration, tighten CSP, add Zod validation, security headers, and password strength",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Fix encryption key derivation (remove hardcoded salt)",
+      "description": "As a developer, I need the encryption module to use the ENCRYPTION_KEY directly instead of deriving it with a hardcoded salt.",
+      "acceptanceCriteria": [
+        "In src/lib/encryption.ts: remove the scrypt key derivation with hardcoded 'salt'",
+        "Replace with direct base64 decode of ENCRYPTION_KEY env var",
+        "Add validation that decoded key is exactly 32 bytes, throw Error if not",
+        "Keep the per-record random salt (crypto.randomBytes(16)) for encrypt/decrypt — do NOT remove it",
+        "Export getEncryptionKey function that returns Buffer",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Verified: scrypt removed. getEncryptionKey decodes base64 directly, validates 32-byte length. Per-record salt (randomBytes(32)) preserved."
+    },
+    {
+      "id": "US-002",
+      "title": "Reduce session duration to 24 hours",
+      "description": "As a developer, I need JWT sessions to expire after 24 hours instead of 30 days for a financial application.",
+      "acceptanceCriteria": [
+        "In src/lib/auth.ts: change session maxAge from 30 * 24 * 60 * 60 to 24 * 60 * 60",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Verified: maxAge is 24 * 60 * 60 (24 hours) on line 11."
+    },
+    {
+      "id": "US-003",
+      "title": "Tighten CSP and add security headers",
+      "description": "As a developer, I need to remove unsafe-eval from CSP and add COOP/CORP/HSTS preload headers.",
+      "acceptanceCriteria": [
+        "In next.config.ts: remove 'unsafe-eval' from script-src in CSP (keep 'unsafe-inline' for Next.js compatibility)",
+        "Add 'preload' to HSTS header: 'max-age=31536000; includeSubDomains; preload'",
+        "Add Cross-Origin-Opener-Policy: same-origin header",
+        "Add Cross-Origin-Resource-Policy: same-origin header",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Verified: CSP script-src is 'self' 'unsafe-inline' (no unsafe-eval). HSTS has preload. COOP and CORP headers present."
+    },
+    {
+      "id": "US-004",
+      "title": "Add Zod validation to projects and staff API PUT handlers",
+      "description": "As a developer, I need PUT handlers to validate request bodies against Zod schemas before passing to services.",
+      "acceptanceCriteria": [
+        "In src/app/api/projects/[id]/route.ts PUT: import projectFormSchema, validate body with .partial().safeParse(body), return 400 with fieldErrors on failure, pass parsed.data to service",
+        "In src/app/api/staff/[id]/route.ts PUT: import staffBaseSchema, validate body with .partial().safeParse(body), return 400 on failure, pass parsed.data to service",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Verified: projects/[id] uses projectFormSchema.partial().safeParse. staff/[id] uses staffBaseSchema.partial().safeParse. Both return 400 with fieldErrors."
+    },
+    {
+      "id": "US-005",
+      "title": "Add Zod validation to expenditures and time-allocations API PUT handlers",
+      "description": "As a developer, I need expenditure and time-allocation PUT handlers to validate against Zod schemas.",
+      "acceptanceCriteria": [
+        "In src/app/api/expenditures/[id]/route.ts PUT: import expenditureBaseSchema, validate body with .partial().safeParse(body), return 400 on failure, pass parsed.data to service",
+        "In src/app/api/time-allocations/[id]/route.ts PUT: import timeAllocationBaseSchema, validate body with .partial().safeParse(body), return 400 on failure, pass parsed.data to service",
+        "If base schemas don't exist, extract them from the full form schemas in the respective schema files",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Verified: expenditures/[id] uses expenditureBaseSchema.partial().safeParse. time-allocations/[id] uses timeAllocationBaseSchema.partial().safeParse. Both return 400 with fieldErrors."
+    },
+    {
+      "id": "US-006",
+      "title": "Add password strength validation",
+      "description": "As a developer, I need password strength requirements enforced at registration and password change.",
+      "acceptanceCriteria": [
+        "In src/lib/auth.ts: add validatePassword function that enforces minimum 10 characters, requires uppercase, lowercase, and number",
+        "validatePassword returns { valid: boolean; error?: string }",
+        "Update hashPassword function to call validatePassword before hashing, throw Error if invalid",
+        "Define PASSWORD_MIN_LENGTH = 10 and PASSWORD_REGEX constants",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Verified: PASSWORD_MIN_LENGTH=10, PASSWORD_REGEX checks upper+lower+digit. validatePassword returns {valid,error}. hashPassword calls validatePassword and throws on failure."
+    }
+  ]
+}

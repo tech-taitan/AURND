@@ -1,0 +1,449 @@
+{
+  "project": "R&D Tax App",
+  "branchName": "ralph/rd-project-ai-features",
+  "description": "AI-powered content generation for R&D Project Setup stage using Google Gemini 2.5 Flash with multi-step reasoning and batch review workflow",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add environment variable configuration",
+      "description": "As a developer, I need the Gemini API key configured in environment variables so that the AI service can authenticate.",
+      "acceptanceCriteria": [
+        "Add GOOGLE_AI_API_KEY to .env.example with placeholder value",
+        "Add GOOGLE_AI_API_KEY to environment validation schema in src/lib/env.ts",
+        "Update CLAUDE.md with new environment variable",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Update Activity schema for AI metadata",
+      "description": "As a developer, I need to store AI generation metadata on activities so that we can track which fields were AI-assisted.",
+      "acceptanceCriteria": [
+        "Add aiGeneratedFields String[] field to RDActivity model in schema.prisma",
+        "Add aiReviewHistory Json? field to RDActivity model",
+        "Run npx prisma db push to apply schema changes",
+        "Run npx prisma generate to update client",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Create AI Review result types",
+      "description": "As a developer, I need shared TypeScript types for AI review results so that frontend and backend are type-safe.",
+      "acceptanceCriteria": [
+        "Create src/types/ai-review.ts",
+        "Export HecSuggestion interface with hypothesis, experiment, observation, evaluation, conclusion fields",
+        "Export ClassificationSuggestion interface with type, confidence, reasoning, suggestedCoreActivityId",
+        "Export UncertaintySuggestion interface with statement, isCommercial, confidence",
+        "Export CodeSuggestion interface with code, description, confidence, rationale",
+        "Export DominantPurposeJustification interface with justification, linkedCoreActivityId",
+        "Export ValidationStatus type: 'passed' | 'needs_refinement' | 'failed'",
+        "Export SuggestionStatus type: 'pending' | 'accepted' | 'edited' | 'skipped'",
+        "Export AiReviewResult interface containing all suggestion types",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Create Gemini AI Service Foundation",
+      "description": "As a developer, I need a base AI service that handles Gemini 2.5 Flash API calls so that all AI features use a consistent interface.",
+      "acceptanceCriteria": [
+        "Install @google/generative-ai package",
+        "Create src/services/ai/gemini.service.ts",
+        "Export GeminiService class with generateContent method",
+        "Support both streaming and non-streaming responses via options parameter",
+        "Include retry logic with exponential backoff (3 retries, starting at 1s)",
+        "Read API key from process.env.GOOGLE_AI_API_KEY",
+        "Throw descriptive error if API key is missing",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Create H-E-C Assistant prompt template",
+      "description": "As a developer, I need a prompt template for H-E-C generation so that the AI produces consistent, compliant documentation.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/prompts/hec-assistant.ts",
+        "Export buildHecPrompt function that accepts project name, description, activity details",
+        "Prompt instructs AI to generate Hypothesis, Experiment, Observation, Evaluation, Conclusion",
+        "Include R&D Tax Incentive H-E-C framework guidelines in system context",
+        "Specify output format as JSON matching HecSuggestion interface",
+        "Instruct AI to write in past tense, 2-4 sentences per section",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Create Activity Classifier prompt template",
+      "description": "As a developer, I need a prompt template for activity classification so that the AI recommends correct types.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/prompts/activity-classifier.ts",
+        "Export buildClassifierPrompt function that accepts activity description and existing core activities",
+        "Include ATO definitions for CORE, SUPPORTING_DIRECT, SUPPORTING_DOMINANT_PURPOSE",
+        "Specify output format as JSON matching ClassificationSuggestion interface",
+        "Instruct AI to provide confidence score 0-100 and reasoning",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Create Uncertainty Generator prompt template",
+      "description": "As a developer, I need a prompt template for technical uncertainty statements.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/prompts/uncertainty-generator.ts",
+        "Export buildUncertaintyPrompt function that accepts activity details",
+        "Specify format: 'It was not known whether [challenge] could be achieved because [knowledge gap]'",
+        "Include guidance to distinguish technical vs commercial uncertainty",
+        "Instruct AI to generate 2-3 alternatives with confidence scores",
+        "Specify output format as JSON array matching UncertaintySuggestion[]",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Create Code Suggester prompt template",
+      "description": "As a developer, I need a prompt template for ANZSIC/FOR code suggestions.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/prompts/code-suggester.ts",
+        "Export buildCodeSuggesterPrompt function that accepts company details and activity content",
+        "Include brief explanation of ANZSIC (industry) and FOR (research field) codes",
+        "Instruct AI to return top 3 of each with code, description, confidence, rationale",
+        "Specify output format as JSON with anzsicCodes and forCodes arrays",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Create Dominant Purpose prompt template",
+      "description": "As a developer, I need a prompt template for dominant purpose justifications.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/prompts/dominant-purpose.ts",
+        "Export buildDominantPurposePrompt function that accepts activity and linked core activity details",
+        "Include ATO guidance on dominant purpose test (>50% R&D related)",
+        "Instruct AI to reference the specific core activity in justification",
+        "Specify output format as JSON matching DominantPurposeJustification",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Implement H-E-C Assistant service",
+      "description": "As a user, I want the AI to generate Hypothesis, Experiment, and Conclusion content from my project description.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/hec-assistant.service.ts",
+        "Export HecAssistantService class with generate method",
+        "Method accepts project name, description, and optional existing activity details",
+        "Use GeminiService with buildHecPrompt to generate content",
+        "Parse JSON response into HecSuggestion type",
+        "Handle parsing errors gracefully with descriptive error message",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Implement Activity Classifier service",
+      "description": "As a user, I want the AI to recommend whether my activity is CORE or SUPPORTING.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/activity-classifier.service.ts",
+        "Export ActivityClassifierService class with classify method",
+        "Method accepts activity description and list of existing core activities",
+        "Use GeminiService with buildClassifierPrompt",
+        "Parse JSON response into ClassificationSuggestion type",
+        "Return classification, confidence (0-100), reasoning, and optional suggestedCoreActivityId",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Implement Technical Uncertainty Generator service",
+      "description": "As a user, I want the AI to suggest technical uncertainty statements.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/uncertainty-generator.service.ts",
+        "Export UncertaintyGeneratorService class with generate method",
+        "Method accepts activity name and description",
+        "Use GeminiService with buildUncertaintyPrompt",
+        "Parse JSON response into UncertaintySuggestion[] array",
+        "Filter out any suggestions where isCommercial is true",
+        "Return 2-3 valid technical uncertainty statements",
+        "Typecheck passes"
+      ],
+      "priority": 12,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Implement ANZSIC/FOR Code Suggester service",
+      "description": "As a user, I want the AI to suggest appropriate industry and research classification codes.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/code-suggester.service.ts",
+        "Export CodeSuggesterService class with suggest method",
+        "Method accepts company name, industry description, and activity content",
+        "Use GeminiService with buildCodeSuggesterPrompt",
+        "Parse JSON response into object with anzsicCodes and forCodes arrays",
+        "Each code has: code, description, confidence (0-100), rationale",
+        "Return top 3 of each type",
+        "Typecheck passes"
+      ],
+      "priority": 13,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Implement Dominant Purpose Justifier service",
+      "description": "As a user documenting a SUPPORTING_DOMINANT_PURPOSE activity, I want the AI to draft a justification.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/dominant-purpose.service.ts",
+        "Export DominantPurposeService class with generateJustification method",
+        "Method accepts activity details and linked core activity details",
+        "Use GeminiService with buildDominantPurposePrompt",
+        "Parse JSON response into DominantPurposeJustification type",
+        "Justification must reference the linked core activity by name",
+        "Typecheck passes"
+      ],
+      "priority": 14,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Implement validation service",
+      "description": "As a developer, I need the AI to validate its outputs against R&D guidelines.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/validation.service.ts",
+        "Export ValidationService class with validate method",
+        "Method accepts AiReviewResult and returns validation feedback",
+        "Create validation prompt that checks: H-E-C describes technical uncertainty, classification matches ATO definitions, uncertainty statements are technical not commercial",
+        "Return ValidationStatus: 'passed', 'needs_refinement', or 'failed'",
+        "If needs_refinement, include specific feedback string for each issue",
+        "Typecheck passes"
+      ],
+      "priority": 15,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "title": "Create AI Review orchestrator service",
+      "description": "As a developer, I need a service that orchestrates all AI features with validation loops.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/review-orchestrator.service.ts",
+        "Export ReviewOrchestratorService class with review method",
+        "Method accepts projectId and optional activityId",
+        "Fetch project and activity data from database using existing services",
+        "Run HecAssistant, ActivityClassifier, UncertaintyGenerator, CodeSuggester in parallel",
+        "Run DominantPurpose only if classification suggests SUPPORTING_DOMINANT_PURPOSE",
+        "After generation, run ValidationService",
+        "If validation returns needs_refinement, regenerate with feedback (max 2 loops)",
+        "Return consolidated AiReviewResult with all suggestions and final validationStatus",
+        "Typecheck passes"
+      ],
+      "priority": 16,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-017",
+      "title": "Create AI Review API endpoint",
+      "description": "As a developer, I need an API endpoint that triggers AI review for a project.",
+      "acceptanceCriteria": [
+        "Create src/app/api/projects/[id]/ai-review/route.ts",
+        "Export POST handler that accepts optional activityId in request body",
+        "Verify user authentication using getServerSession",
+        "Verify user has access to the project's organisation",
+        "Call ReviewOrchestratorService.review with projectId and activityId",
+        "Return JSON response with AiReviewResult",
+        "Handle errors and return appropriate status codes (401, 403, 404, 500)",
+        "Set timeout of 30 seconds, return partial results if exceeded",
+        "Typecheck passes"
+      ],
+      "priority": 17,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-018",
+      "title": "Create AI Review button component",
+      "description": "As a user, I want an AI Review button that triggers the review process with loading state.",
+      "acceptanceCriteria": [
+        "Create src/components/ai/ai-review-button.tsx as client component",
+        "Accept projectId and optional activityId as props",
+        "Accept onComplete callback that receives AiReviewResult",
+        "Button displays sparkle icon (use Lucide sparkles) with 'AI Review' text",
+        "Loading state shows spinner icon with 'Analyzing...' text",
+        "onClick calls POST /api/projects/[id]/ai-review",
+        "On success, call onComplete with result",
+        "On error, show toast notification with error message",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 18,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-019",
+      "title": "Create AI suggestion card component",
+      "description": "As a user, I want to see each AI suggestion in a card with accept/edit/skip actions.",
+      "acceptanceCriteria": [
+        "Create src/components/ai/ai-suggestion-card.tsx as client component",
+        "Accept props: fieldLabel, currentValue, suggestion, confidence, reasoning, onAccept, onEdit, onSkip",
+        "Display field label as header, current value (dimmed) if exists, AI suggestion as main content",
+        "Show confidence badge: green background if >80, yellow if 50-80, red if <50",
+        "Collapsible 'Why this suggestion?' section shows reasoning text",
+        "Three action buttons: Accept (green), Edit (blue), Skip (gray)",
+        "Edit mode replaces suggestion text with textarea, shows Save/Cancel buttons",
+        "onEdit callback receives the edited text",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 19,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-020",
+      "title": "Create AI Review panel component",
+      "description": "As a user, I want to see all AI suggestions in a review panel organized by category.",
+      "acceptanceCriteria": [
+        "Create src/components/ai/ai-review-panel.tsx as client component",
+        "Accept props: isOpen, onClose, reviewResult (AiReviewResult), onSave",
+        "Render as Sheet (slide-out panel) from existing ui components",
+        "Group suggestions into sections: H-E-C (5 cards), Classification (1 card), Technical Uncertainty (2-3 cards), Industry Codes (up to 6 cards), Dominant Purpose (1 card if applicable)",
+        "Include 'Accept All' button at top that marks all suggestions as accepted",
+        "Track status of each suggestion: pending, accepted, edited, skipped",
+        "Show summary at bottom: X of Y suggestions accepted",
+        "Save button calls onSave with array of accepted/edited suggestions",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 20,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-021",
+      "title": "Implement save accepted suggestions server action",
+      "description": "As a user, I want my accepted suggestions to be saved to the database.",
+      "acceptanceCriteria": [
+        "Create src/actions/ai-review.ts with 'use server' directive",
+        "Export saveAiSuggestions function accepting activityId and accepted suggestions array",
+        "Each suggestion has: fieldName, value, wasEdited boolean",
+        "Map fieldNames to RDActivity columns (hypothesis, experiment, observation, evaluation, conclusion, technicalUncertainty, activityType, anzsicCode, forCode, dominantPurposeJustification)",
+        "Update activity record with accepted values",
+        "Set aiGeneratedFields array to list of fieldNames that were AI-assisted",
+        "Call revalidatePath for the activity page",
+        "Return ActionResult with updated activity",
+        "Typecheck passes"
+      ],
+      "priority": 21,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-022",
+      "title": "Add AI Review button to project detail page",
+      "description": "As a user, I want to access AI Review from the project detail page.",
+      "acceptanceCriteria": [
+        "Locate project detail page in src/app/(dashboard)/projects/[id]/page.tsx or similar",
+        "Import AiReviewButton and AiReviewPanel components",
+        "Add state for reviewResult and isPanelOpen",
+        "Add AiReviewButton to page header actions area, passing projectId",
+        "On button complete, set reviewResult and open panel",
+        "Add AiReviewPanel that saves suggestions via saveAiSuggestions action",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 22,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-023",
+      "title": "Add AI Review button to activity form",
+      "description": "As a user, I want to access AI Review when creating or editing an activity.",
+      "acceptanceCriteria": [
+        "Locate activity form component in src/components/activities/ directory",
+        "Import AiReviewButton and AiReviewPanel components",
+        "Add state for reviewResult and isPanelOpen",
+        "Add AiReviewButton near form header, passing both projectId and activityId",
+        "On button complete, set reviewResult and open panel",
+        "On panel save, update form fields with accepted values (use form.setValue if React Hook Form)",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 23,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-024",
+      "title": "Create AI-assisted indicator badge",
+      "description": "As a user, I want to see which fields were AI-generated.",
+      "acceptanceCriteria": [
+        "Create src/components/ai/ai-assisted-badge.tsx",
+        "Small inline badge with sparkle icon and 'AI' text",
+        "Tooltip on hover shows 'AI-assisted'",
+        "Accept fieldName and aiGeneratedFields array as props",
+        "Only render if fieldName is in aiGeneratedFields array",
+        "Use subtle styling (small, muted colors) to not distract from content",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 24,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-025",
+      "title": "Add AI-assisted badges to activity display",
+      "description": "As a user, I want to see AI-assisted badges on activity fields that were generated by AI.",
+      "acceptanceCriteria": [
+        "Locate activity detail/view component",
+        "Import AiAssistedBadge component",
+        "Add badge next to labels for: Hypothesis, Experiment, Observation, Evaluation, Conclusion, Technical Uncertainty, Activity Type, ANZSIC Code, FOR Code, Dominant Purpose Justification",
+        "Pass activity.aiGeneratedFields to each badge",
+        "Badges only appear for fields that were AI-assisted",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 25,
+      "passes": true,
+      "notes": ""
+    }
+  ]
+}

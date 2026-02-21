@@ -1,0 +1,613 @@
+// R&D Tax Offset Application - Database Schema
+// Prisma Schema for Australian R&D Tax Incentive Management
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// Authentication & Multi-Tenancy
+// ============================================
+
+model Organisation {
+  id             String   @id @default(cuid())
+  name           String
+  abn            String?
+  taxAgentNumber String?
+  address        Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  users   User[]
+  clients Client[]
+}
+
+model User {
+  id             String       @id @default(cuid())
+  email          String       @unique
+  emailVerified  DateTime?
+  name           String?
+  image          String?
+  hashedPassword String?
+  role           UserRole     @default(PRACTITIONER)
+  organisationId String?
+  organisation   Organisation? @relation(fields: [organisationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  accounts    Account[]
+  sessions    Session[]
+  assignments ClientAssignment[]
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  PRACTITIONER
+  READONLY
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================
+// Client Management
+// ============================================
+
+model Client {
+  id             String       @id @default(cuid())
+  organisationId String
+  organisation   Organisation @relation(fields: [organisationId], references: [id])
+
+  // Company Details
+  companyName       String
+  abn               String
+  acn               String?
+  tfn               String? // Encrypted
+
+  // Entity Classification
+  incorporationType   IncorporationType @default(AUSTRALIAN_LAW)
+  isConsolidatedGroup Boolean           @default(false)
+  headCompanyId       String?
+
+  // R&D Eligibility Factors
+  aggregatedTurnover Decimal?  @db.Decimal(15, 2)
+  isExemptControlled Boolean   @default(false)
+
+  // Contact Details
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+  address      Json?
+
+  // Financial Year End (default: 30 June)
+  incomeYearEndMonth Int @default(6)
+  incomeYearEndDay   Int @default(30)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects     RDProject[]
+  applications IncomeYearApplication[]
+  staffMembers StaffMember[]
+  assignments  ClientAssignment[]
+
+  @@index([organisationId])
+  @@index([abn])
+}
+
+enum IncorporationType {
+  AUSTRALIAN_LAW
+  FOREIGN_RESIDENT
+  FOREIGN_PERMANENT_ESTABLISHMENT
+}
+
+model ClientAssignment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id])
+  role      String   @default("assigned")
+  createdAt DateTime @default(now())
+
+  @@unique([userId, clientId])
+}
+
+// ============================================
+// R&D Projects and Activities
+// ============================================
+
+model RDProject {
+  id       String @id @default(cuid())
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+
+  // Project Details
+  projectName String
+  projectCode String?
+  status      ProjectStatus @default(ACTIVE)
+
+  // Technical Documentation
+  projectDescription   String @db.Text
+  technicalHypothesis  String? @db.Text
+  methodology          String? @db.Text
+  technicalUncertainty String? @db.Text
+  expectedOutcome      String? @db.Text
+
+  // Classification
+  industryCode    String? // ANZSIC code
+  fieldOfResearch String? // FOR code
+
+  // Dates
+  startDate DateTime?
+  endDate   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  activities   RDActivity[]
+  expenditures Expenditure[]
+
+  @@index([clientId])
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  COMPLETED
+  ABANDONED
+}
+
+model RDActivity {
+  id        String    @id @default(cuid())
+  projectId String
+  project   RDProject @relation(fields: [projectId], references: [id])
+
+  // Activity Details
+  activityName        String
+  activityType        ActivityType
+  activityDescription String       @db.Text
+
+  // Eligibility Documentation (Hypothesis -> Experiment -> Conclusion)
+  hypothesis String? @db.Text
+  experiment String? @db.Text
+  observation String? @db.Text
+  evaluation  String? @db.Text
+  conclusion  String? @db.Text
+
+  // Technical context
+  technicalUncertainty String? @db.Text
+
+  // Classification
+  anzsicCode String?
+  forCode    String?
+
+  // For Supporting Activities
+  relatedCoreActivityId String?
+  relatedCoreActivity   RDActivity?  @relation("CoreToSupporting", fields: [relatedCoreActivityId], references: [id])
+  supportingActivities  RDActivity[] @relation("CoreToSupporting")
+  dominantPurpose       String?      @db.Text
+
+  // Location
+  isOverseasActivity Boolean @default(false)
+  overseasFindingId  String?
+
+  // AI Assistance Metadata
+  aiGeneratedFields String[] // Field names that were AI-assisted
+  aiReviewHistory   Json?    // History of AI review sessions
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  timeAllocations TimeAllocation[]
+  expenditures    Expenditure[]
+
+  @@index([projectId])
+  @@index([relatedCoreActivityId])
+}
+
+enum ActivityType {
+  CORE
+  SUPPORTING_DIRECT
+  SUPPORTING_DOMINANT_PURPOSE
+}
+
+// ============================================
+// Income Year Applications
+// ============================================
+
+model IncomeYearApplication {
+  id       String @id @default(cuid())
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+
+  // Income Year
+  incomeYearStart DateTime
+  incomeYearEnd   DateTime
+
+  // Registration Details
+  ausIndustryNumber    String?
+  registrationStatus   RegistrationStatus @default(NOT_STARTED)
+  registrationDate     DateTime?
+  registrationDeadline DateTime // Calculated: income year end + 10 months
+
+  // Claim Details
+  claimStatus ClaimStatus @default(NOT_STARTED)
+
+  // Calculated Amounts (cached for performance)
+  totalNotionalDeduction Decimal? @db.Decimal(15, 2)
+  refundableOffset       Decimal? @db.Decimal(15, 2)
+  nonRefundableOffset    Decimal? @db.Decimal(15, 2)
+  feedstockAdjustment    Decimal? @db.Decimal(15, 2)
+  clawbackAdjustment     Decimal? @db.Decimal(15, 2)
+
+  // Offset Type Determination
+  offsetType OffsetType?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expenditures      Expenditure[]
+  documents         GeneratedDocument[]
+  complianceChecks  ComplianceCheck[]
+  deadlineReminders DeadlineReminder[]
+  submissionTracking SubmissionTracking?
+
+  @@unique([clientId, incomeYearEnd])
+  @@index([clientId])
+  @@index([registrationDeadline])
+}
+
+enum RegistrationStatus {
+  NOT_STARTED
+  DRAFT
+  SUBMITTED
+  REGISTERED
+  REJECTED
+}
+
+enum ClaimStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  READY_FOR_REVIEW
+  SUBMITTED
+  COMPLETED
+}
+
+enum OffsetType {
+  REFUNDABLE      // For entities with turnover < $20M
+  NON_REFUNDABLE  // For all other entities
+}
+
+// ============================================
+// Expenditure Tracking
+// ============================================
+
+model Expenditure {
+  id            String                @id @default(cuid())
+  applicationId String
+  application   IncomeYearApplication @relation(fields: [applicationId], references: [id])
+  projectId     String?
+  project       RDProject?            @relation(fields: [projectId], references: [id])
+  activityId    String?
+  activity      RDActivity?           @relation(fields: [activityId], references: [id])
+
+  // Expenditure Classification (matching R&D Schedule)
+  expenditureType ExpenditureType
+
+  // Amount Details
+  amountExGst Decimal @db.Decimal(15, 2)
+  gstAmount   Decimal @default(0) @db.Decimal(15, 2)
+
+  // For Associate Expenditure
+  isAssociateExpense Boolean   @default(false)
+  isPaid             Boolean   @default(true)
+  paymentDate        DateTime?
+
+  // For Overseas Expenditure
+  isOverseasExpense Boolean @default(false)
+
+  // Supporting Information
+  description   String
+  invoiceNumber String?
+  invoiceDate   DateTime?
+  supplierName  String?
+  supplierAbn   String?
+
+  // For RSP Expenditure
+  rspRegistrationNumber String?
+
+  // Period
+  periodStart DateTime?
+  periodEnd   DateTime?
+
+  // Document References
+  attachments Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([applicationId])
+  @@index([projectId])
+  @@index([activityId])
+  @@index([expenditureType])
+}
+
+enum ExpenditureType {
+  RSP                // Research Service Provider
+  CONTRACT_NON_RSP   // Contract expenditure (not RSP)
+  SALARY             // Salary expenditure
+  OTHER              // Other R&D expenditure
+  FEEDSTOCK_INPUT    // Feedstock input
+  ASSOCIATE_PAID     // Paid to associates
+  ASSET_DECLINE      // Decline in value of assets
+  BALANCING_ADJ      // Balancing adjustment losses
+  CRC_CONTRIBUTION   // Cooperative Research Centre
+}
+
+// ============================================
+// Staff and Time Allocation
+// ============================================
+
+model StaffMember {
+  id       String @id @default(cuid())
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+
+  name       String
+  position   String?
+  employeeId String?
+
+  // Salary Information
+  annualSalary Decimal? @db.Decimal(15, 2)
+  onCosts      Decimal? @db.Decimal(15, 2) // Super, payroll tax, etc.
+  hourlyRate   Decimal? @db.Decimal(10, 2) // Calculated or manual
+
+  // Employment Details
+  startDate DateTime?
+  endDate   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  timeAllocations TimeAllocation[]
+
+  @@index([clientId])
+}
+
+model TimeAllocation {
+  id            String      @id @default(cuid())
+  staffMemberId String
+  staffMember   StaffMember @relation(fields: [staffMemberId], references: [id])
+  activityId    String
+  activity      RDActivity  @relation(fields: [activityId], references: [id])
+
+  // Time Period
+  periodStart DateTime
+  periodEnd   DateTime
+
+  // Allocation
+  hoursAllocated   Decimal  @db.Decimal(10, 2)
+  percentageOfTime Decimal? @db.Decimal(5, 2)
+
+  // Calculated Cost
+  calculatedCost Decimal? @db.Decimal(15, 2)
+
+  // Notes
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([staffMemberId])
+  @@index([activityId])
+}
+
+// ============================================
+// Documents and Compliance
+// ============================================
+
+model GeneratedDocument {
+  id            String                @id @default(cuid())
+  applicationId String
+  application   IncomeYearApplication @relation(fields: [applicationId], references: [id])
+
+  documentType DocumentType
+  fileName     String
+  fileUrl      String
+  fileSize     Int?
+  version      Int          @default(1)
+
+  generatedAt DateTime @default(now())
+  generatedBy String?
+
+  @@index([applicationId])
+}
+
+enum DocumentType {
+  REGISTRATION_FORM
+  ACTIVITY_DESCRIPTION
+  EXPENDITURE_SUMMARY
+  RD_SCHEDULE
+  COMPLIANCE_REPORT
+  TIME_ALLOCATION_REPORT
+  FULL_APPLICATION_PACK
+  OUTCOME_CONFIRMATION
+}
+
+model ComplianceCheck {
+  id            String                @id @default(cuid())
+  applicationId String
+  application   IncomeYearApplication @relation(fields: [applicationId], references: [id])
+
+  checkType ComplianceCheckType
+  status    ComplianceStatus
+  message   String?
+  details   Json?
+
+  checkedAt DateTime @default(now())
+
+  @@index([applicationId])
+}
+
+// ============================================
+// Submission Tracking
+// ============================================
+
+model SubmissionTracking {
+  id               String                @id @default(cuid())
+  applicationId    String                @unique
+  application      IncomeYearApplication @relation(fields: [applicationId], references: [id])
+  status           SubmissionStatus      @default(DRAFT)
+  externalReference String?
+  submittedAt      DateTime?
+  lastUpdated      DateTime              @updatedAt
+  notes            String?               @db.Text
+  responseDraft    String?               @db.Text
+
+  events SubmissionEvent[]
+}
+
+model SubmissionEvent {
+  id          String             @id @default(cuid())
+  trackingId  String
+  tracking    SubmissionTracking @relation(fields: [trackingId], references: [id])
+  status      SubmissionStatus
+  note        String?            @db.Text
+  createdAt   DateTime           @default(now())
+
+  @@index([trackingId])
+}
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  INFO_REQUESTED
+  RESPONDED
+  APPROVED
+  REJECTED
+}
+
+enum ComplianceCheckType {
+  ENTITY_ELIGIBILITY
+  ACTIVITY_ELIGIBILITY
+  EXPENDITURE_THRESHOLD
+  REGISTRATION_DEADLINE
+  DOCUMENTATION_COMPLETENESS
+  EXPENDITURE_CONSISTENCY
+  ASSOCIATE_PAYMENT
+  OVERSEAS_FINDING
+}
+
+enum ComplianceStatus {
+  PASS
+  WARNING
+  FAIL
+  NOT_APPLICABLE
+}
+
+model DeadlineReminder {
+  id            String                @id @default(cuid())
+  applicationId String
+  application   IncomeYearApplication @relation(fields: [applicationId], references: [id])
+
+  deadlineType DeadlineType
+  dueDate      DateTime
+  reminderDate DateTime
+  sent         Boolean      @default(false)
+  sentAt       DateTime?
+
+  @@index([applicationId])
+  @@index([reminderDate])
+}
+
+// ============================================
+// Official Guidance
+// ============================================
+
+model GuidanceCategory {
+  id         String   @id @default(cuid())
+  name       String
+  sourceUrl  String
+  lastSynced DateTime @default(now())
+
+  items GuidanceItem[]
+}
+
+model GuidanceItem {
+  id         String   @id @default(cuid())
+  categoryId String
+  category   GuidanceCategory @relation(fields: [categoryId], references: [id])
+  title      String
+  content    String   @db.Text
+  keywords   String[]
+  updatedAt  DateTime @updatedAt
+
+  @@index([categoryId])
+}
+
+enum DeadlineType {
+  REGISTRATION_10_MONTH
+  TAX_RETURN_LODGEMENT
+  INFORMATION_REQUEST
+  OBJECTION
+}
+
+// ============================================
+// Audit Logging
+// ============================================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String
+  oldValue   Json?
+  newValue   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}

@@ -1,0 +1,73 @@
+# Ralph Progress Log
+# Feature: Phase 1 - Critical Auth & Secrets
+# Branch: ralph/phase-1-critical-auth
+# Started: 2026-02-21
+# Stories: 7
+
+---
+
+[2026-02-21 Session 1]
+
+## US-001: Sanitize .env.example and verify gitignore - COMPLETE
+- DATABASE_URL uses 'your_password_here' placeholder
+- NEXTAUTH_SECRET and ENCRYPTION_KEY have safe placeholder text
+- GOOGLE_AI_API_KEY is commented out with instructions
+- .gitignore has '.env*' entry on line 34
+
+## US-002: Enhance proxy.ts with API route auth protection - COMPLETE
+- src/proxy.ts uses getToken from next-auth/jwt
+- Returns 401 JSON for unauthenticated /api/* requests
+- Redirects unauthenticated non-API requests to /auth/login with callbackUrl
+- Returns 403 for missing organisationId on API routes
+- Redirects /clients and /projects to /auth/no-organisation if no org
+- Public paths: /auth/login, /auth/register, /auth/error, /api/auth, /api/health
+
+## US-003: Add auth, rate limiting, logger to applications/[id] - COMPLETE
+- All 3 handlers (GET, PUT, DELETE) have rate limiting, session auth, org check
+- Uses getApplicationOrgId for entity-level org verification
+- logger.error replaces all console.error calls
+
+## US-004: Add auth, rate limiting, logger to activities/[id] - COMPLETE
+- All 3 handlers (GET, PUT, DELETE) have rate limiting, session auth, org check
+- Uses getActivityOrgId for entity-level org verification
+- logger.error replaces all console.error calls
+
+## US-005: Add auth, rate limiting, logger to time-allocations/[id] - COMPLETE
+- All 3 handlers (GET, PUT, DELETE) have rate limiting, session auth, org check
+- Uses getTimeAllocationOrgId for entity-level org verification
+- Zod validation on PUT handler via timeAllocationBaseSchema.partial()
+- logger.error replaces all console.error calls
+
+## US-006: Add auth, rate limiting, logger to projects/[id]/activities - COMPLETE
+- Both handlers (GET, POST) have rate limiting, session auth, org check
+- Uses getProjectOrgId for entity-level org verification
+- logger.error replaces all console.error calls
+
+## US-007: Add rate limiting to applications list route - COMPLETE
+- Both handlers (GET, POST) have rate limiting
+- Existing auth checks intact with organisationId requirement
+- Added getClientOrgId verification for client ownership
+
+---
+
+## Summary
+
+All 7 user stories for Phase 1 Critical Auth & Secrets have been verified:
+
+### Files Modified
+- .env.example - Safe placeholders
+- .gitignore - Confirmed .env* coverage
+- src/proxy.ts - Centralized API auth (401/403)
+- src/app/api/applications/[id]/route.ts - Auth + rate limit + logger + org verify
+- src/app/api/activities/[id]/route.ts - Auth + rate limit + logger + org verify
+- src/app/api/time-allocations/[id]/route.ts - Auth + rate limit + logger + org verify
+- src/app/api/projects/[id]/activities/route.ts - Auth + rate limit + logger + org verify
+- src/app/api/applications/route.ts - Rate limit + org verify
+
+### Typecheck Status
+- 0 errors in Phase 1 files
+- All existing errors are pre-existing (seed files, test mocks, service types)
+
+Progress: 7/7 complete (100%)
+
+---

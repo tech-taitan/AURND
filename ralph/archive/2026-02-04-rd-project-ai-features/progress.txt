@@ -1,0 +1,136 @@
+# Ralph Progress Log
+# Feature: R&D Project AI Features
+# Branch: ralph/rd-project-ai-features
+# Started: 2026-02-04
+# Stories: 25
+
+---
+
+[2026-02-04 Session 1]
+
+## Foundation (US-001 to US-004) - COMPLETE
+- US-001: Added GOOGLE_AI_API_KEY to .env.example, src/lib/env.ts, CLAUDE.md
+- US-002: Added aiGeneratedFields and aiReviewHistory to RDActivity schema
+- US-003: Created src/types/ai-review.ts with all AI result interfaces
+- US-004: Created src/services/ai/gemini.service.ts with retry logic
+
+## Prompt Templates (US-005 to US-009) - COMPLETE
+- US-005: src/services/ai/prompts/hec-assistant.ts
+- US-006: src/services/ai/prompts/activity-classifier.ts
+- US-007: src/services/ai/prompts/uncertainty-generator.ts
+- US-008: src/services/ai/prompts/code-suggester.ts
+- US-009: src/services/ai/prompts/dominant-purpose.ts
+
+## AI Services (US-010 to US-014) - COMPLETE
+- US-010: src/services/ai/hec-assistant.service.ts
+- US-011: src/services/ai/activity-classifier.service.ts
+- US-012: src/services/ai/uncertainty-generator.service.ts
+- US-013: src/services/ai/code-suggester.service.ts
+- US-014: src/services/ai/dominant-purpose.service.ts
+
+## Orchestration & API (US-015 to US-017) - COMPLETE
+- US-015: src/services/ai/validation.service.ts
+- US-016: src/services/ai/review-orchestrator.service.ts
+- US-017: src/app/api/projects/[id]/ai-review/route.ts
+
+## UI Components (US-018 to US-025) - COMPLETE
+- US-018: src/components/ai/ai-review-button.tsx - COMPLETE
+- US-019: src/components/ai/ai-suggestion-card.tsx - COMPLETE
+- US-020: src/components/ai/ai-review-panel.tsx - COMPLETE
+- US-021: src/actions/ai-review.ts (fixed type error) - COMPLETE
+- US-022: Added AiReviewWrapper to project detail page - COMPLETE
+- US-023: Added AiReviewFormWrapper to activity form - COMPLETE
+- US-024: src/components/ai/ai-assisted-badge.tsx - COMPLETE
+- US-025: Added AI badges to activity detail page - COMPLETE
+
+Progress: 25/25 complete (100%)
+
+---
+
+## Troubleshooting Log
+
+### Issue 1: Invalid Gemini Model Name (404 Error)
+**Error:** `models/gemini-2.5-flash-preview-05-20 is not found for API version v1beta`
+**Cause:** The model ID was incorrect. Google Gemini model IDs must be in lowercase-hyphenated format.
+**Fix:** Changed `DEFAULT_MODEL` in gemini.service.ts from invalid names to `gemini-2.0-flash`
+
+**Valid Gemini Model IDs (as of 2026):**
+- `gemini-2.0-flash` - Latest fast model
+- `gemini-1.5-flash` - Stable fast model
+- `gemini-1.5-pro` - More capable model
+
+**Invalid formats:**
+- `Gemini 2.5 Flash` - Spaces and capitalization are not valid
+- `gemini-2.5-flash-preview-05-20` - Non-existent version
+
+### Issue 2: Model Name Format (400 Bad Request)
+**Error:** `unexpected model name format`
+**Cause:** User manually changed model to `Gemini 2.5 Flash` (human-readable name with spaces)
+**Fix:** Model IDs must be API format: lowercase with hyphens (e.g., `gemini-2.0-flash`)
+
+### Issue 3: JSON Parsing Errors
+**Error:** `Could not parse H-E-C response as JSON`, `Could not parse uncertainty response as JSON array`, etc.
+**Cause:**
+1. AI model returning text with extra content around the JSON
+2. AI model returning JSON wrapped in markdown code blocks
+3. Nested try-catch not properly handling secondary JSON.parse errors
+
+**Fix:**
+1. Added `jsonMode: true` option to Gemini service to force JSON response format
+2. Set `responseMimeType: 'application/json'` in generation config
+3. Improved error handling in all parsing functions with proper nested try-catch
+4. Added console logging of raw responses for debugging
+5. Updated all AI services to use `jsonMode: true`
+
+**Files Modified:**
+- `src/services/ai/gemini.service.ts` - Added jsonMode option with responseMimeType
+- `src/services/ai/hec-assistant.service.ts` - Added jsonMode: true
+- `src/services/ai/activity-classifier.service.ts` - Added jsonMode: true
+- `src/services/ai/uncertainty-generator.service.ts` - Added jsonMode: true
+- `src/services/ai/code-suggester.service.ts` - Added jsonMode: true
+- `src/services/ai/prompts/*.ts` - Improved parsing error handling
+
+### Key Learnings:
+1. Google Generative AI model IDs are case-sensitive and use hyphens
+2. Always use official model IDs from Google AI documentation
+3. After changing model names, restart dev server to clear cache
+4. Use `responseMimeType: 'application/json'` to force models to return valid JSON
+5. Always wrap secondary JSON.parse calls in try-catch for better error messages
+
+---
+
+## Summary
+
+All 25 user stories for AI features have been implemented:
+
+### Backend Services
+- Gemini AI service with retry logic and streaming support
+- 5 prompt templates following ATO R&D Tax Incentive guidelines
+- 5 AI feature services (H-E-C Assistant, Activity Classifier, Uncertainty Generator, Code Suggester, Dominant Purpose Justifier)
+- Validation service with multi-step refinement loops
+- Review orchestrator that runs features in parallel
+
+### API
+- POST /api/projects/[id]/ai-review endpoint with authentication
+
+### UI Components
+- AI Review button with loading state
+- AI suggestion card with accept/edit/skip actions
+- AI Review panel dialog showing all suggestions by category
+- AI-assisted badge indicator for AI-generated fields
+
+### Integration
+- AI Review button on project detail page
+- AI Review button on activity form (new and edit)
+- AI-assisted badges on activity detail page H-E-C fields
+
+### Files Created/Modified
+- src/lib/env.ts - Added GOOGLE_AI_API_KEY
+- prisma/schema.prisma - Added AI metadata fields
+- src/types/ai-review.ts - All TypeScript types
+- src/services/ai/*.ts - 8 service files
+- src/services/ai/prompts/*.ts - 5 prompt templates
+- src/app/api/projects/[id]/ai-review/route.ts - API endpoint
+- src/components/ai/*.tsx - 6 UI components
+- src/actions/ai-review.ts - Server action
+- Activity form and detail pages - Integration

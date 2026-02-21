@@ -1,0 +1,183 @@
+{
+  "project": "R&D Tax App",
+  "branchName": "ralph/success-likelihood-scorer",
+  "description": "AI Success Likelihood Scorer - Ranks R&D documentation against known-good patterns and returns a success probability score with risk factor breakdown",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add success score types to ai-review.ts",
+      "description": "As a developer, I need TypeScript types for success scoring so that the feature is type-safe.",
+      "acceptanceCriteria": [
+        "Add SuccessScore interface with overallScore (0-100), riskLevel ('low' | 'medium' | 'high'), breakdown array",
+        "Add RiskFactor interface with category, description, impact (-10 to -30), suggestion",
+        "Add StrengthFactor interface with category, description, impact (+5 to +15)",
+        "Add SuccessScoreBreakdown interface combining riskFactors and strengthFactors arrays",
+        "Export all new types from src/types/ai-review.ts",
+        "Add successScore optional field to AiReviewResult interface",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Create scoring rules reference data",
+      "description": "As a developer, I need reference data for known-good patterns and risk factors based on ATO guidance.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/scoring/scoring-rules.ts",
+        "Export RISK_FACTORS constant array with common audit triggers (vague language, commercial focus, missing technical detail, etc.)",
+        "Each risk factor has: id, category, pattern (regex or keywords), impact, description, suggestion",
+        "Export STRENGTH_PATTERNS constant array with good documentation patterns",
+        "Each strength pattern has: id, category, pattern, impact, description",
+        "Export HEC_QUALITY_CHECKS array with specific H-E-C quality criteria",
+        "Include at least 10 risk factors and 8 strength patterns based on ATO R&D Tax Incentive guidelines",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Create rule-based scorer service",
+      "description": "As a developer, I need a service that scores suggestions against predefined rules.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/scoring/rule-scorer.service.ts",
+        "Export RuleScorerService class with scoreContent method",
+        "Method accepts content string and contentType ('hec' | 'uncertainty' | 'classification' | 'dominantPurpose')",
+        "Check content against RISK_FACTORS patterns, accumulate negative impacts",
+        "Check content against STRENGTH_PATTERNS, accumulate positive impacts",
+        "Return object with matchedRisks array, matchedStrengths array, and ruleScore (0-100)",
+        "Base score starts at 70, adjusts based on matched patterns",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Create success scorer prompt template",
+      "description": "As a developer, I need a prompt template for AI-based success scoring.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/prompts/success-scorer.ts",
+        "Export buildSuccessScorerPrompt function that accepts AiReviewResult",
+        "Prompt instructs AI to evaluate documentation quality against ATO R&D Tax Incentive standards",
+        "Include scoring criteria: technical vs commercial focus, systematic methodology, knowledge generation, proper H-E-C structure",
+        "Specify output format as JSON with aiScore (0-100), riskFactors array, strengthFactors array, overallAssessment string",
+        "Export getSuccessScorerSystemInstruction function with ATO auditor persona",
+        "Export parseSuccessScorerResponse function to parse JSON response",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Create success scorer service",
+      "description": "As a developer, I need a service that combines rule-based and AI scoring for final success likelihood.",
+      "acceptanceCriteria": [
+        "Create src/services/ai/scoring/success-scorer.service.ts",
+        "Export SuccessScorerService class with score method",
+        "Method accepts AiReviewResult and returns SuccessScore",
+        "Call RuleScorerService for each content type (hec fields, uncertainty, classification reasoning)",
+        "Call Gemini AI with success scorer prompt for holistic assessment",
+        "Combine rule score (40% weight) and AI score (60% weight) for final overallScore",
+        "Determine riskLevel: 'low' if score >= 75, 'medium' if >= 50, 'high' if < 50",
+        "Return SuccessScore with overallScore, riskLevel, and breakdown",
+        "Use jsonMode: true for Gemini call",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Integrate success scorer into review orchestrator",
+      "description": "As a developer, I need the success score calculated as part of the AI review.",
+      "acceptanceCriteria": [
+        "Import SuccessScorerService in review-orchestrator.service.ts",
+        "After all AI features complete and validation passes, call SuccessScorerService.score",
+        "Add successScore to the returned AiReviewResult",
+        "Add 'successScoring' to featuresProcessed array on success",
+        "Handle errors gracefully - if scoring fails, continue without score and add error to errors array",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Create success score display component",
+      "description": "As a user, I want to see my success likelihood score prominently displayed.",
+      "acceptanceCriteria": [
+        "Create src/components/ai/success-score-display.tsx as client component",
+        "Accept successScore prop of type SuccessScore",
+        "Display circular progress indicator showing overallScore percentage",
+        "Color coding: green for low risk, yellow for medium, red for high",
+        "Show risk level text below score (e.g., 'Low Risk', 'Medium Risk', 'High Risk')",
+        "Include tooltip explaining what the score means",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Create risk factors breakdown component",
+      "description": "As a user, I want to see what factors are affecting my success score.",
+      "acceptanceCriteria": [
+        "Create src/components/ai/risk-factors-breakdown.tsx as client component",
+        "Accept breakdown prop of type SuccessScoreBreakdown",
+        "Display collapsible section 'What's affecting your score?'",
+        "Show risk factors with red indicators, impact value, description, and suggestion",
+        "Show strength factors with green indicators, impact value, and description",
+        "Sort by absolute impact value (highest impact first)",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Add success score to AI review panel",
+      "description": "As a user, I want to see my success score in the AI review panel.",
+      "acceptanceCriteria": [
+        "Import SuccessScoreDisplay and RiskFactorsBreakdown in ai-review-panel.tsx",
+        "Add new section at top of panel (after header, before suggestions)",
+        "Display SuccessScoreDisplay component if reviewResult.successScore exists",
+        "Display RiskFactorsBreakdown component below the score",
+        "Section header: 'ATO Success Likelihood'",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Add success score summary to review button tooltip",
+      "description": "As a user, I want a quick preview of my score before opening the full panel.",
+      "acceptanceCriteria": [
+        "Update ai-review-button.tsx to accept optional lastScore prop",
+        "If lastScore provided, show small badge next to button with score percentage",
+        "Badge color matches risk level (green/yellow/red)",
+        "Tooltip on badge shows 'Last AI Review: X% success likelihood'",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": ""
+    }
+  ]
+}

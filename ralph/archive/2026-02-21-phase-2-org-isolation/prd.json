@@ -1,0 +1,171 @@
+{
+  "project": "R&D Tax App",
+  "branchName": "ralph/phase-2-org-isolation",
+  "description": "Phase 2: Organisation Isolation & IDOR Prevention - Enforce organisationId verification on all routes and server actions to prevent cross-org data access",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Create org verification utility in auth-utils.ts",
+      "description": "As a developer, I need centralised helpers to resolve organisationId for any entity so routes can verify ownership.",
+      "acceptanceCriteria": [
+        "Create src/lib/auth-utils.ts",
+        "Export getClientOrgId(clientId): looks up client.organisationId via Prisma",
+        "Export getProjectOrgId(projectId): resolves project -> client -> organisationId",
+        "Export getActivityOrgId(activityId): resolves activity -> project -> client -> organisationId",
+        "Export getApplicationOrgId(applicationId): resolves application -> client -> organisationId",
+        "Export getExpenditureOrgId(expenditureId): resolves expenditure -> application -> client -> organisationId",
+        "Export getStaffOrgId(staffMemberId): resolves staffMember -> client -> organisationId",
+        "Export getTimeAllocationOrgId(timeAllocationId): resolves timeAllocation -> staffMember -> client -> organisationId",
+        "Each function returns string | null (null if entity not found)",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Verified: All 7 helper functions exist with correct Prisma relation traversal. Each returns string | null."
+    },
+    {
+      "id": "US-002",
+      "title": "Add org verification to list endpoints (applications, expenditures, time-allocations)",
+      "description": "As a developer, I need list endpoints to verify parent entity ownership before returning data.",
+      "acceptanceCriteria": [
+        "In src/app/api/applications/route.ts GET: verify clientId belongs to session org via getClientOrgId before querying",
+        "In src/app/api/applications/route.ts POST: verify clientId belongs to session org before creating",
+        "In src/app/api/expenditures/route.ts GET: verify applicationId/clientId belongs to session org",
+        "In src/app/api/time-allocations/route.ts GET: verify staffMemberId/activityId belongs to session org",
+        "All session checks require organisationId: if (!session?.user?.organisationId)",
+        "Return 404 on org mismatch (do not reveal existence)",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Verified: applications/route.ts has getClientOrgId on GET/POST. expenditures/route.ts has getApplicationOrgId+getClientOrgId. time-allocations/route.ts has getStaffOrgId+getActivityOrgId. All check organisationId."
+    },
+    {
+      "id": "US-003",
+      "title": "Add org verification to list endpoints (projects, staff)",
+      "description": "As a developer, I need projects and staff list endpoints to verify parent entity ownership.",
+      "acceptanceCriteria": [
+        "In src/app/api/projects/route.ts GET: verify clientId belongs to session org via getClientOrgId",
+        "In src/app/api/projects/route.ts POST: verify clientId belongs to session org before creating",
+        "In src/app/api/staff/route.ts GET: verify clientId belongs to session org via getClientOrgId",
+        "In src/app/api/staff/route.ts POST: verify clientId belongs to session org before creating",
+        "All session checks require organisationId",
+        "Return 404 on org mismatch",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Verified: projects/route.ts has getClientOrgId on GET/POST. staff/route.ts has getClientOrgId on GET/POST. Both check organisationId."
+    },
+    {
+      "id": "US-004",
+      "title": "Add org verification to detail/mutation endpoints (projects, expenditures, staff)",
+      "description": "As a developer, I need [id] routes for projects, expenditures, and staff to verify org ownership.",
+      "acceptanceCriteria": [
+        "In src/app/api/projects/[id]/route.ts GET/PUT/DELETE: add getProjectOrgId check, verify against session.user.organisationId",
+        "In src/app/api/expenditures/[id]/route.ts GET/PUT/DELETE: add getExpenditureOrgId check",
+        "In src/app/api/staff/[id]/route.ts GET/PUT/DELETE: add getStaffOrgId check",
+        "Change session checks from if (!session?.user) to if (!session?.user?.organisationId)",
+        "Return 404 on org mismatch",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Verified: All three [id] routes have org verification in every handler (GET/PUT/DELETE). Session checks use organisationId. Returns 404 on mismatch."
+    },
+    {
+      "id": "US-005",
+      "title": "Add org verification to application sub-routes (compliance, submission, comparison, outcome)",
+      "description": "As a developer, I need application sub-routes to verify the application belongs to the user's org.",
+      "acceptanceCriteria": [
+        "In src/app/api/applications/[id]/compliance/route.ts: add getApplicationOrgId import, verify org before processing",
+        "In src/app/api/applications/[id]/submission/route.ts GET and POST: add org verification",
+        "In src/app/api/applications/[id]/comparison/route.ts: add org verification",
+        "In src/app/api/applications/[id]/outcome/route.ts: add org verification",
+        "All session checks require organisationId",
+        "Return 404 on org mismatch",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Verified: All 4 sub-routes have getApplicationOrgId import and org verification. compliance, submission (GET+POST), comparison, outcome all check organisationId."
+    },
+    {
+      "id": "US-006",
+      "title": "Add org verification to application sub-routes (draft, calculate, documents)",
+      "description": "As a developer, I need remaining application sub-routes to verify org ownership.",
+      "acceptanceCriteria": [
+        "In src/app/api/applications/[id]/draft/route.ts: add getApplicationOrgId import and org verification",
+        "In src/app/api/applications/[id]/calculate/route.ts: add getApplicationOrgId and logger imports, add org verification, replace console.error with logger.error",
+        "In src/app/api/applications/[id]/documents/activity-description/route.ts: add org verification",
+        "In src/app/api/applications/[id]/documents/full-pack/route.ts: add org verification",
+        "All session checks require organisationId",
+        "Return 404 on org mismatch",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Verified: draft has getApplicationOrgId + org check. calculate has getApplicationOrgId + logger + org check. activity-description and full-pack both have org verification."
+    },
+    {
+      "id": "US-007",
+      "title": "Fix dashboard audit log org leak",
+      "description": "As a developer, I need the dashboard audit log to only show entries from the user's own organisation.",
+      "acceptanceCriteria": [
+        "In src/services/dashboard.service.ts getRecentActivity method: filter audit logs by userId belonging to the given organisation",
+        "Query users in the organisation first, then filter audit logs by those userIds",
+        "No audit log entries from other organisations should be visible",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "Verified: getRecentActivity queries users by organisationId first, then filters audit logs by userId in those users."
+    },
+    {
+      "id": "US-008",
+      "title": "Add org verification to server actions (projects, activities)",
+      "description": "As a developer, I need server actions for projects and activities to verify org ownership.",
+      "acceptanceCriteria": [
+        "In src/actions/projects.ts: add requireOrganisation() and org verification to all functions",
+        "In src/actions/activities.ts: add org verification to all functions",
+        "Use getProjectOrgId/getActivityOrgId from auth-utils.ts for ownership checks",
+        "Return error ActionResult if org mismatch",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": "Verified: projects.ts has requireOrganisation + getProjectOrgId in all functions. activities.ts has requireOrganisation + getActivityOrgId in all functions."
+    },
+    {
+      "id": "US-009",
+      "title": "Add org verification to server actions (expenditures, staff, time-allocations)",
+      "description": "As a developer, I need server actions for expenditures, staff, and time-allocations to verify org ownership.",
+      "acceptanceCriteria": [
+        "In src/actions/expenditures.ts: add org verification to all functions",
+        "In src/actions/staff.ts: add org verification to all functions",
+        "In src/actions/time-allocations.ts: add org verification to all functions",
+        "Use appropriate getXxxOrgId helpers from auth-utils.ts",
+        "Return error ActionResult if org mismatch",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": "Verified: expenditures.ts has requireOrganisation + getExpenditureOrgId/getApplicationOrgId. staff.ts has requireOrganisation + getStaffOrgId/getClientOrgId. time-allocations.ts has requireOrganisation + getTimeAllocationOrgId/getStaffOrgId/getActivityOrgId."
+    },
+    {
+      "id": "US-010",
+      "title": "Add org verification to server actions (applications)",
+      "description": "As a developer, I need application server actions to verify client ownership before creating/modifying applications.",
+      "acceptanceCriteria": [
+        "In src/actions/applications.ts: add org verification to createApplication (verify clientId ownership)",
+        "Add org verification to any other unprotected application actions",
+        "Use getClientOrgId/getApplicationOrgId from auth-utils.ts",
+        "Return error ActionResult if org mismatch",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": "Verified: applications.ts has requireOrganisation + getClientOrgId for create, getApplicationOrgId for update/delete/get. All functions protected."
+    }
+  ]
+}

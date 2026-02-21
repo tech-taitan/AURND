@@ -1,0 +1,52 @@
+# Ralph Progress Log
+# Feature: Phase 2 - Organisation Isolation & IDOR Prevention
+# Branch: ralph/phase-2-org-isolation
+# Started: 2026-02-21
+# Stories: 10
+
+---
+
+[2026-02-21 Session 1]
+
+## US-001: Create org verification utility - COMPLETE
+- src/lib/auth-utils.ts created with 7 helper functions
+- getClientOrgId, getProjectOrgId, getActivityOrgId, getApplicationOrgId
+- getExpenditureOrgId, getStaffOrgId, getTimeAllocationOrgId
+
+## US-002: Org verify list endpoints (applications, expenditures, time-allocations) - COMPLETE
+- applications/route.ts: getClientOrgId on GET/POST
+- expenditures/route.ts: getApplicationOrgId + getClientOrgId on GET
+- time-allocations/route.ts: getStaffOrgId + getActivityOrgId on GET
+
+## US-003: Org verify list endpoints (projects, staff) - COMPLETE
+- projects/route.ts: getClientOrgId on GET/POST
+- staff/route.ts: getClientOrgId on GET/POST
+
+## US-004: Org verify detail/mutation (projects, expenditures, staff) - COMPLETE
+- projects/[id], expenditures/[id], staff/[id]: org check on GET/PUT/DELETE
+
+## US-005: Org verify app sub-routes (compliance, submission, comparison, outcome) - COMPLETE
+- All 4 sub-routes have getApplicationOrgId + org verification
+
+## US-006: Org verify app sub-routes (draft, calculate, documents) - COMPLETE
+- draft, calculate, activity-description, full-pack: all org verified
+
+## US-007: Fix dashboard audit log org leak - COMPLETE
+- getRecentActivity filters audit logs by userId in organisation
+
+## US-008: Org verify server actions (projects, activities) - COMPLETE
+- requireOrganisation + getProjectOrgId/getActivityOrgId in all functions
+
+## US-009: Org verify server actions (expenditures, staff, time-allocations) - COMPLETE
+- requireOrganisation + appropriate getXxxOrgId in all functions
+
+## US-010: Org verify server actions (applications) - COMPLETE
+- requireOrganisation + getClientOrgId/getApplicationOrgId in all functions
+
+---
+
+## Summary
+All 10 stories verified. 24 files modified. 0 TS errors in Phase 2 files.
+Progress: 10/10 complete (100%)
+
+---
