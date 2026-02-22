@@ -108,7 +108,7 @@ function LoginForm() {
           className="w-full"
           onClick={() => {
             enterGuestMode()
-            router.push('/guest')
+            window.location.href = '/guest'
           }}
         >
           <UserCircle className="mr-2 h-4 w-4" />
