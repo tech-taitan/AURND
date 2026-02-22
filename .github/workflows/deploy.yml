@@ -10,40 +10,36 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     environment: production
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: rd-tax-app/package-lock.json
-      
+
       - name: Install dependencies
-        working-directory: rd-tax-app
         run: npm ci
-      
+
       - name: Generate Prisma Client
-        working-directory: rd-tax-app
         run: npx prisma generate
-      
+
       - name: Build
-        working-directory: rd-tax-app
         run: npm run build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
           NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
-      
+
       # Add your deployment steps here
       # Examples:
       # - Deploy to Vercel: vercel deploy --prod
       # - Deploy to AWS: aws s3 sync, cloudfront invalidation
       # - Deploy to Docker: docker build, push, deploy
-      
+
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         if: false  # Enable when ready
@@ -52,4 +48,3 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: '--prod'
-          working-directory: rd-tax-app
