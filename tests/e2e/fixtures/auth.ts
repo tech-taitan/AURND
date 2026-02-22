@@ -5,7 +5,7 @@ import { test as base, expect, Page } from '@playwright/test'
  *
  * Uses the seeded admin credentials from seed:admin script:
  *   Email: admin@example.com
- *   Password: password123
+ *   Password: Admin123!
  */
 export const test = base.extend<{ authenticatedPage: Page }>({
   authenticatedPage: async ({ page }, runTest) => {
@@ -14,7 +14,7 @@ export const test = base.extend<{ authenticatedPage: Page }>({
 
     // Fill in credentials
     await page.fill('input[name="email"]', 'admin@example.com')
-    await page.fill('input[name="password"]', 'password123')
+    await page.fill('input[name="password"]', 'Admin123!')
 
     // Submit
     await page.click('button[type="submit"]')
