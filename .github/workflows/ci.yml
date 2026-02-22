@@ -70,7 +70,7 @@ jobs:
           DATABASE_URL: "postgresql://test:test@localhost:5432/test"
           NEXTAUTH_SECRET: "test-secret-key-for-ci-must-be-32-chars"
           NEXTAUTH_URL: "http://localhost:3000"
-          ENCRYPTION_KEY: "test-encryption-key-must-be-32-chars"
+          ENCRYPTION_KEY: "dGVzdC1lbmNyeXB0aW9uLWtleXRlc3QtZW5jcnlwdGk="
 
   build:
     name: Build
@@ -97,7 +97,7 @@ jobs:
           DATABASE_URL: "postgresql://test:test@localhost:5432/test"
           NEXTAUTH_SECRET: "test-secret-key-for-ci-must-be-32-chars"
           NEXTAUTH_URL: "http://localhost:3000"
-          ENCRYPTION_KEY: "test-encryption-key-must-be-32-chars"
+          ENCRYPTION_KEY: "dGVzdC1lbmNyeXB0aW9uLWtleXRlc3QtZW5jcnlwdGk="
 
   test-e2e:
     name: E2E Tests
@@ -142,7 +142,7 @@ jobs:
         env:
           DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/rd_tax_app_test?schema=public"
           NEXTAUTH_SECRET: "test-secret-key-for-ci-must-be-32-chars"
-          ENCRYPTION_KEY: "test-encryption-key-must-be-32-chars"
+          ENCRYPTION_KEY: "dGVzdC1lbmNyeXB0aW9uLWtleXRlc3QtZW5jcnlwdGk="
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -153,7 +153,7 @@ jobs:
           DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/rd_tax_app_test?schema=public"
           NEXTAUTH_SECRET: "test-secret-key-for-ci-must-be-32-chars"
           NEXTAUTH_URL: "http://localhost:3000"
-          ENCRYPTION_KEY: "test-encryption-key-must-be-32-chars"
+          ENCRYPTION_KEY: "dGVzdC1lbmNyeXB0aW9uLWtleXRlc3QtZW5jcnlwdGk="
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
