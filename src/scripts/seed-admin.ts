@@ -1,5 +1,6 @@
 import {
   ActivityType,
+  ExpenditureType,
   IncorporationType,
   Prisma,
   PrismaClient,
@@ -62,7 +63,7 @@ function buildClientPayload(overrides: Partial<typeof exampleClientForm>) {
     abn: base.abn,
     acn: base.acn,
     tfn: base.tfn,
-    incorporationType: IncorporationType[base.incorporationType],
+    incorporationType: IncorporationType[base.incorporationType as keyof typeof IncorporationType],
     isConsolidatedGroup: base.isConsolidatedGroup,
     headCompanyId: base.headCompanyId,
     aggregatedTurnover: base.aggregatedTurnover,
@@ -120,7 +121,7 @@ async function upsertComplianceClient(params: {
       ausIndustryNumber:
         params.applicationOverrides?.ausIndustryNumber ?? exampleApplicationForm.ausIndustryNumber,
       registrationStatus: RegistrationStatus[
-        params.applicationOverrides?.registrationStatus ?? exampleApplicationForm.registrationStatus
+        (params.applicationOverrides?.registrationStatus ?? exampleApplicationForm.registrationStatus) as keyof typeof RegistrationStatus
       ],
       registrationDate: parseDate(
         params.applicationOverrides?.registrationDate ?? exampleApplicationForm.registrationDate
@@ -135,7 +136,7 @@ async function upsertComplianceClient(params: {
       ausIndustryNumber:
         params.applicationOverrides?.ausIndustryNumber ?? exampleApplicationForm.ausIndustryNumber,
       registrationStatus: RegistrationStatus[
-        params.applicationOverrides?.registrationStatus ?? exampleApplicationForm.registrationStatus
+        (params.applicationOverrides?.registrationStatus ?? exampleApplicationForm.registrationStatus) as keyof typeof RegistrationStatus
       ],
       registrationDate: parseDate(
         params.applicationOverrides?.registrationDate ?? exampleApplicationForm.registrationDate
@@ -150,7 +151,7 @@ async function upsertComplianceClient(params: {
       clientId: client.id,
       projectName: exampleProjectForm.projectName,
       projectCode: exampleProjectForm.projectCode,
-      status: ProjectStatus[exampleProjectForm.status],
+      status: ProjectStatus[exampleProjectForm.status as keyof typeof ProjectStatus],
       projectDescription: exampleProjectForm.projectDescription,
       technicalHypothesis: exampleProjectForm.technicalHypothesis,
       methodology: exampleProjectForm.methodology,
@@ -166,7 +167,7 @@ async function upsertComplianceClient(params: {
       clientId: client.id,
       projectName: exampleProjectForm.projectName,
       projectCode: exampleProjectForm.projectCode,
-      status: ProjectStatus[exampleProjectForm.status],
+      status: ProjectStatus[exampleProjectForm.status as keyof typeof ProjectStatus],
       projectDescription: exampleProjectForm.projectDescription,
       technicalHypothesis: exampleProjectForm.technicalHypothesis,
       methodology: exampleProjectForm.methodology,
@@ -189,7 +190,7 @@ async function upsertComplianceClient(params: {
     update: {
       projectId: params.projectId,
       activityName: activityData.activityName,
-      activityType: ActivityType[activityData.activityType],
+      activityType: ActivityType[activityData.activityType as keyof typeof ActivityType],
       activityDescription: activityData.activityDescription,
       hypothesis: activityData.hypothesis ?? null,
       experiment: activityData.experiment ?? null,
@@ -201,13 +202,13 @@ async function upsertComplianceClient(params: {
       isOverseasActivity: activityData.isOverseasActivity,
       overseasFindingId: activityData.overseasFindingId ?? null,
       aiGeneratedFields: [],
-      aiReviewHistory: null,
+      aiReviewHistory: Prisma.JsonNull,
     },
     create: {
       id: params.activityId,
       projectId: params.projectId,
       activityName: activityData.activityName,
-      activityType: ActivityType[activityData.activityType],
+      activityType: ActivityType[activityData.activityType as keyof typeof ActivityType],
       activityDescription: activityData.activityDescription,
       hypothesis: activityData.hypothesis ?? null,
       experiment: activityData.experiment ?? null,
@@ -219,7 +220,7 @@ async function upsertComplianceClient(params: {
       isOverseasActivity: activityData.isOverseasActivity,
       overseasFindingId: activityData.overseasFindingId ?? null,
       aiGeneratedFields: [],
-      aiReviewHistory: null,
+      aiReviewHistory: Prisma.JsonNull,
     },
   })
 
@@ -234,7 +235,7 @@ async function upsertComplianceClient(params: {
       applicationId: params.applicationId,
       projectId: params.projectId,
       activityId: params.activityId,
-      expenditureType: expenditureData.expenditureType,
+      expenditureType: expenditureData.expenditureType as ExpenditureType,
       amountExGst: expenditureData.amountExGst,
       gstAmount: expenditureData.gstAmount ?? '0',
       isAssociateExpense: expenditureData.isAssociateExpense,
@@ -256,7 +257,7 @@ async function upsertComplianceClient(params: {
       applicationId: params.applicationId,
       projectId: params.projectId,
       activityId: params.activityId,
-      expenditureType: expenditureData.expenditureType,
+      expenditureType: expenditureData.expenditureType as ExpenditureType,
       amountExGst: expenditureData.amountExGst,
       gstAmount: expenditureData.gstAmount ?? '0',
       isAssociateExpense: expenditureData.isAssociateExpense,

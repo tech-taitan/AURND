@@ -150,7 +150,7 @@ class ComplianceService extends BaseService {
         checkType: 'REGISTRATION_DEADLINE',
         status: 'FAIL',
         message: 'Registration deadline has passed',
-        details: { deadline },
+        details: { deadline: deadline.toISOString() },
         checkedAt: new Date(),
       })
     } else {
@@ -160,7 +160,7 @@ class ComplianceService extends BaseService {
         checkType: 'REGISTRATION_DEADLINE',
         status: 'PASS',
         message: 'Registration deadline within timeframe',
-        details: { deadline },
+        details: { deadline: deadline.toISOString() },
         checkedAt: new Date(),
       })
     }

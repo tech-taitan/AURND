@@ -60,6 +60,10 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     notFound()
   }
 
+  if (!stats) {
+    notFound()
+  }
+
   // Validate HEC for each activity
   const activitiesWithValidation = await Promise.all(
     project.activities.map(async (activity) => {

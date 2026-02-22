@@ -24,14 +24,15 @@ vi.mock('@/lib/db', () => ({
 import prisma from '@/lib/db'
 import { complianceService } from '@/services/compliance.service'
 
-const mockPrisma = vi.mocked(prisma)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockPrisma = prisma as any
 
 describe('ComplianceService', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
     // Default: create returns input with an id
-    mockPrisma.complianceCheck.create.mockImplementation(async ({ data }) => ({
+    mockPrisma.complianceCheck.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
       id: `check-${Date.now()}-${Math.random()}`,
       applicationId: data.applicationId,
       checkType: data.checkType,

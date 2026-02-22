@@ -141,7 +141,7 @@ class ExpenditureService extends BaseService {
           rspRegistrationNumber: data.rspRegistrationNumber || null,
           periodStart: data.periodStart ? new Date(data.periodStart) : null,
           periodEnd: data.periodEnd ? new Date(data.periodEnd) : null,
-          attachments: data.attachments || null,
+          attachments: data.attachments || Prisma.JsonNull,
         },
       })
 
@@ -217,7 +217,7 @@ class ExpenditureService extends BaseService {
           ...(data.periodEnd !== undefined && {
             periodEnd: data.periodEnd ? new Date(data.periodEnd) : null,
           }),
-          ...(data.attachments !== undefined && { attachments: data.attachments || null }),
+          ...(data.attachments !== undefined && { attachments: data.attachments || Prisma.JsonNull }),
         },
       })
 

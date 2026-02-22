@@ -54,7 +54,7 @@ function formatLog(entry: LogEntry): string {
   
   if (error) {
     output += `\n  Error: ${error.name}: ${error.message}`
-    if (error.stack && process.env.NODE_ENV !== 'production') {
+    if (error.stack) {
       output += `\n  Stack: ${error.stack}`
     }
   }

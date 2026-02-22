@@ -19,5 +19,5 @@ vi.mock('next/navigation', () => ({
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test'
 process.env.NEXTAUTH_SECRET = 'test-secret-key-for-testing-must-be-32-chars'
 process.env.NEXTAUTH_URL = 'http://localhost:3000'
-process.env.ENCRYPTION_KEY = 'test-encryption-key-must-be-32-characters'
-process.env.NODE_ENV = 'test'
+process.env.ENCRYPTION_KEY = 'dGVzdC1lbmNyeXB0aW9uLWtleXRlc3QtZW5jcnlwdGk='
+// NODE_ENV is read-only in TypeScript; set via vitest config instead
