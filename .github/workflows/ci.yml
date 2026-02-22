@@ -133,7 +133,7 @@ jobs:
         run: npx prisma generate
 
       - name: Push schema to test DB
-        run: npx prisma db push --skip-generate
+        run: npx prisma db push
         env:
           DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/rd_tax_app_test?schema=public"
 
