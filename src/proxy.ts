@@ -9,6 +9,7 @@ const publicPaths = [
   '/auth/error',
   '/api/auth',
   '/api/health',
+  '/guest',
 ]
 
 // Check if path is public
