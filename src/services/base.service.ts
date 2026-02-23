@@ -1,9 +1,8 @@
 import { PrismaClient } from '@prisma/client'
 import prisma from '@/lib/db'
 
-export type ActionResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: string }
+// Re-export from shared types (safe for both server and client imports)
+export type { ActionResult } from '@/types/actions'
 
 export abstract class BaseService {
   protected prisma: PrismaClient

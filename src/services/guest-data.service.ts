@@ -6,7 +6,7 @@
  * Returns ActionResult<T> for compatibility with existing UI patterns.
  */
 
-import type { ActionResult } from './base.service'
+import type { ActionResult } from '@/types/actions'
 import { calculateRegistrationDeadline } from './tax-offset-calculator.service'
 
 // ---------- Type definitions for guest data ----------
