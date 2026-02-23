@@ -45,15 +45,15 @@ export function GuestBanner() {
   }
 
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950 dark:text-yellow-200">
+    <div className="flex flex-col gap-2 border-b border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800 sm:flex-row sm:items-center sm:justify-between sm:gap-4 dark:border-yellow-900 dark:bg-yellow-950 dark:text-yellow-200">
       <div className="flex items-center gap-2">
         <Info className="h-4 w-4 shrink-0" />
         <span>
-          <strong>Guest Mode</strong> &mdash; Data is stored in your browser only.{" "}
+          <strong>Guest Mode</strong><span className="hidden sm:inline"> &mdash; Data is stored in your browser only.</span>{" "}
           <button onClick={handleSignIn} className="underline hover:no-underline">
             Sign in
-          </button>{" "}
-          to save securely.
+          </button>
+          <span className="hidden sm:inline">{" "}to save securely.</span>
         </span>
       </div>
       <div className="flex items-center gap-2">

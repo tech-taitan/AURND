@@ -93,3 +93,12 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Touch-friendly tap targets on mobile devices */
+@media (pointer: coarse) {
+  button,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

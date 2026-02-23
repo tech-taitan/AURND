@@ -30,11 +30,12 @@ const secondaryNavigation = [
   { name: "Settings", href: "/settings", icon: Settings },
 ]
 
-interface SidebarProps {
+interface SidebarContentProps {
   isGuest?: boolean
+  onNavigate?: () => void
 }
 
-export function Sidebar({ isGuest }: SidebarProps) {
+export function SidebarContent({ isGuest, onNavigate }: SidebarContentProps) {
   const pathname = usePathname()
   const prefix = isGuest ? "/guest" : ""
 
@@ -47,10 +48,10 @@ export function Sidebar({ isGuest }: SidebarProps) {
   }
 
   return (
-    <div className="flex h-full w-64 flex-col border-r bg-card">
+    <>
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6">
-        <Link href={prefix + "/"} className="flex items-center gap-2">
+        <Link href={prefix + "/"} className="flex items-center gap-2" onClick={onNavigate}>
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Calculator className="h-5 w-5" />
           </div>
@@ -70,6 +71,7 @@ export function Sidebar({ isGuest }: SidebarProps) {
             <Link
               key={item.name}
               href={prefix + item.href}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 isActive(item.href)
@@ -91,6 +93,7 @@ export function Sidebar({ isGuest }: SidebarProps) {
                 <Link
                   key={item.name}
                   href={item.href}
+                  onClick={onNavigate}
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     isActive(item.href)
@@ -114,6 +117,18 @@ export function Sidebar({ isGuest }: SidebarProps) {
           <p>Application Manager</p>
         </div>
       </div>
+    </>
+  )
+}
+
+interface SidebarProps {
+  isGuest?: boolean
+}
+
+export function Sidebar({ isGuest }: SidebarProps) {
+  return (
+    <div className="hidden md:flex h-full w-64 flex-col border-r bg-card">
+      <SidebarContent isGuest={isGuest} />
     </div>
   )
 }

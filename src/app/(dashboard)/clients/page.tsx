@@ -59,9 +59,9 @@ export default async function ClientsPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Clients</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">Clients</h1>
           <p className="text-muted-foreground">
             Manage your R&D Tax Incentive clients
           </p>
@@ -109,11 +109,11 @@ export default async function ClientsPage({ searchParams }: PageProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Company</TableHead>
-                  <TableHead>ABN</TableHead>
-                  <TableHead>Contact</TableHead>
+                  <TableHead className="hidden md:table-cell">ABN</TableHead>
+                  <TableHead className="hidden md:table-cell">Contact</TableHead>
                   <TableHead>Turnover</TableHead>
                   <TableHead>Offset Type</TableHead>
-                  <TableHead>Projects</TableHead>
+                  <TableHead className="hidden md:table-cell">Projects</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -144,10 +144,10 @@ export default async function ClientsPage({ searchParams }: PageProps) {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="font-mono text-sm">
+                      <TableCell className="hidden md:table-cell font-mono text-sm">
                         {formatAbn(client.abn)}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         {client.contactName ? (
                           <div>
                             <div className="font-medium">{client.contactName}</div>
@@ -171,7 +171,7 @@ export default async function ClientsPage({ searchParams }: PageProps) {
                           {getOffsetType(turnover)}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         {projectCount > 0 || appCount > 0 ? (
                           <div className="text-sm">
                             {projectCount > 0 && (

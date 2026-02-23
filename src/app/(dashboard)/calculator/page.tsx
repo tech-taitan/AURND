@@ -74,7 +74,7 @@ export default function CalculatorPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">R&D Tax Offset Calculator</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">R&D Tax Offset Calculator</h1>
         <p className="text-muted-foreground">
           Estimate your R&D Tax Incentive offset based on expenditure and turnover
         </p>

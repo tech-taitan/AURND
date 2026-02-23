@@ -39,9 +39,9 @@ export default async function ApplicationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Income Year Applications</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">Income Year Applications</h1>
           <p className="text-muted-foreground">
             Track R&D Tax Incentive applications by income year
           </p>
@@ -79,9 +79,9 @@ export default async function ApplicationsPage() {
                 <TableRow>
                   <TableHead>Income Year</TableHead>
                   <TableHead>Client</TableHead>
-                  <TableHead>Registration</TableHead>
+                  <TableHead className="hidden md:table-cell">Registration</TableHead>
                   <TableHead>Claim</TableHead>
-                  <TableHead>Deadline</TableHead>
+                  <TableHead className="hidden md:table-cell">Deadline</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -100,7 +100,7 @@ export default async function ApplicationsPage() {
                         {application.client.companyName}
                       </Link>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <Badge variant="outline">{application.registrationStatus}</Badge>
                     </TableCell>
                     <TableCell>
@@ -116,7 +116,7 @@ export default async function ApplicationsPage() {
                         {application.claimStatus}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       {new Date(application.registrationDeadline).toLocaleDateString("en-AU")}
                     </TableCell>
                     <TableCell className="text-right">

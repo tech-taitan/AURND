@@ -44,9 +44,9 @@ export default async function ProjectsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div>
         <div>
-          <h1 className="text-3xl font-bold">R&D Projects</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">R&D Projects</h1>
           <p className="text-muted-foreground">
             Manage all R&D projects across clients
           </p>
@@ -79,8 +79,8 @@ export default async function ProjectsPage() {
                   <TableHead>Project</TableHead>
                   <TableHead>Client</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Activities</TableHead>
-                  <TableHead>Start Date</TableHead>
+                  <TableHead className="hidden md:table-cell">Activities</TableHead>
+                  <TableHead className="hidden md:table-cell">Start Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -124,8 +124,8 @@ export default async function ProjectsPage() {
                         {project.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{project._count.activities}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">{project._count.activities}</TableCell>
+                    <TableCell className="hidden md:table-cell">
                       {project.startDate
                         ? new Date(project.startDate).toLocaleDateString("en-AU")
                         : "-"}
